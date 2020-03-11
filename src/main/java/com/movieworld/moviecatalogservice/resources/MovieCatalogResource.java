@@ -3,7 +3,9 @@ package com.movieworld.moviecatalogservice.resources;
 import com.movieworld.moviecatalogservice.models.CatalogItem;
 import com.movieworld.moviecatalogservice.models.Movie;
 import com.movieworld.moviecatalogservice.models.Rating;
+import com.movieworld.moviecatalogservice.models.UserRating;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,14 +31,20 @@ public class MovieCatalogResource {
     public List<CatalogItem> getCatalog(@PathVariable("userId") String userId){
 
 
-        List<Rating> ratings = Arrays.asList(
-                new Rating("1234", 4),
-                new Rating("5678", 3)
-        );
+        UserRating ratings = restTemplete.getForObject("http://localhost:8083/ratingsdata/users/"+userId, UserRating.class);
 
-        return ratings.stream().map(rating ->{
+        return ratings.getUserRating().stream().map(rating ->{
                 Movie movie = restTemplete.getForObject("http://localhost:8082/movies/"+rating.getMovieId(), Movie.class);
-                /*
+
+                return new CatalogItem(movie.getName(),"Desc", rating.getRating());
+        })
+                .collect(Collectors.toList());
+
+    }
+}
+
+
+/*
                 Movie movie = webClientBuilder.build()
                         .get()
                         .uri("http://localhost:8082/movies/"+rating.getMovieId())
@@ -44,9 +52,3 @@ public class MovieCatalogResource {
                         .bodyToMono(Movie.class)
                         .block();
                 */
-                return new CatalogItem(movie.getName(),"Desc", rating.getRating());
-        })
-                .collect(Collectors.toList());
-
-    }
-}
